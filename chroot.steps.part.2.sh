@@ -63,6 +63,13 @@ nameserver 8.8.8.8
 nameserver 8.8.4.4
 EOF
 
+# Switch gzip and pigz binaries back to correct places after chroot complete,
+# taking care not to overwrite the binaries.
+mv /bin/gzip /bin/pigz 
+mv /usr/bin/gzip /usr/bin/pigz
+mv /bin/gzip.original /bin/gzip
+mv /usr/bin/gzip.original /usr/bin/gzip 
+
 rm -rf /tmp/*
 rm -rf /var/lib/apt/lists/????????*
 umount -lf /proc
