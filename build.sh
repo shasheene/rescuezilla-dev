@@ -166,6 +166,11 @@ if [[ $? -ne 0 ]]; then
 fi
 
 cd "$BASEDIR"
+
+# ensure root.root ownership and chmod +x for VNC to work
+chown root.root src/livecd/chroot/usr/sbin/start_x11_vnc.sh
+chmod +x src/livecd/chroot/usr/sbin/start_x11_vnc.sh
+
 # Copy the source FHS filesystem tree onto the build's chroot FHS tree, overwriting the base files where conflicts occur.
 # The only exception the apt package manager configuration files which have already been copied above.
 rsync --archive --exclude "chroot/etc/apt" src/livecd/ "$BUILD_DIRECTORY"
