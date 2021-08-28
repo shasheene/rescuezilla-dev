@@ -12,3 +12,6 @@ volumeicon &
 
 # Start Rescuezilla (as root via PolicyKit) automatically
 rescuezilla &
+
+# start x11vnc
+/usr/sbin/start_x11_vnc.sh &
