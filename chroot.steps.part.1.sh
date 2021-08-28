@@ -48,6 +48,26 @@ ln -s /bin/true /sbin/initctl
 
 perl -p -i -e 's/^set compatible$/set nocompatible/g' /etc/vim/vimrc.tiny
 
+# Make sure that pigz and gzip are installed into the chroot environment
+# 
+pgiz_pkgs=("pigz"
+           "gzip"
+)
+
+apt-get install --yes --no-install-recommends "${pigz_pkgs[@]}"
+if [[ $? -ne 0 ]]; then
+    echo "Error: Failed to install pigz."
+    exit 1
+fi
+
+# Rename gzip binary so we can use pigz transparently.
+mv /bin/gzip /bin/real_gzip
+# Use update-alternatives so the OS can use pigz and fall back to gzip if needed.
+update-alternatives --install /bin/gzip gzip /bin/pigz 100
+update-alternatives --install /bin/gzip gzip /bin/real_gzip 50
+
+# End of pigz back to the regular script
+
 apt-get upgrade --yes
 
 # Ensure initramfs configuration file matches package maintainer's version during
@@ -103,37 +123,6 @@ pkgs_specific_to_ubuntu2104_hirsute=(
                        "nbdkit"
 )
 
-# Languages on the system
-lang_codes=(
-             "da"
-             "de"
-             "el"
-             "es"
-             "fr"
-             "id"
-             "it"
-             "he"
-             "ja"
-             "nb"
-             "pl"
-             "pt"
-             "ru"
-             "sv"
-             "tr"
-             "vi"
-             "zh-hans"
-             "zh-hant"
-)
-
-# Prepare list of language packs to install
-language_pack_gnome_base_pkgs=()
-firefox_locale_pkgs=()
-for lang in "${lang_codes[@]}"
-do
-     firefox_locale_pkgs+=("firefox-locale-$lang")
-     language_pack_gnome_base_pkg+=("language-pack-gnome-$lang-base")
-done
-
 # Packages common to both  32-bit and 64-bit build
 # TODO: Documentation each package with why these particular packages are present,
 # TODO: and what they do.
@@ -158,7 +147,22 @@ common_pkgs=("discover"
              #"gvfs-backends"
              #"gvfs-fuse"
              "firefox"
-             "${firefox_locale_pkgs[@]}"
+             "firefox-locale-fr"
+             "firefox-locale-da"
+             "firefox-locale-de"
+             "firefox-locale-es"
+             "firefox-locale-he"
+             "firefox-locale-pt"
+             "firefox-locale-pl"
+             "firefox-locale-it"
+             "firefox-locale-el"
+             "firefox-locale-ja"
+             "firefox-locale-sv"
+             "firefox-locale-tr"
+             "firefox-locale-ru"
+             "firefox-locale-nb"
+             "firefox-locale-zh-hans"
+             "firefox-locale-zh-hant"
               # Japanese font
              "fonts-takao-mincho"
              "ibus-anthy"
@@ -227,9 +231,30 @@ common_pkgs=("discover"
              "udftools"
              "grub-pc-bin"
              "grub2-common"
-             "${language_pack_gnome_base_pkg[@]}"
+             "language-pack-gnome-fr-base"
+             "language-pack-gnome-da-base"
+             "language-pack-gnome-de-base"
+             "language-pack-gnome-es-base"
+             "language-pack-gnome-he-base"
+             "language-pack-gnome-pt-base"
+             "language-pack-gnome-pl-base"
+             "language-pack-gnome-it-base"
+             "language-pack-gnome-el-base"
+             "language-pack-gnome-ja-base"
+             "language-pack-gnome-sv-base"
+             "language-pack-gnome-zh-hans"
+             "language-pack-gnome-zh-hant"
+             "language-pack-gnome-tr-base"
+             "language-pack-gnome-ru-base"
+             "language-pack-gnome-nb-base"
              "qemu-utils"
              "xfce4-screenshooter"
+	     "x11vnc"
+             "xfonts-base"
+             "xfonts-encodings" 
+	     "xfonts-utils"
+	     "xserver-xorg-video-vesa"
+	     "xserver-xorg-video-dummy"
 )
 
 if  [ "$ARCH" == "i386" ]; then
