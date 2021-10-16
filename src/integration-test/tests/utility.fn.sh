@@ -58,6 +58,7 @@ check_primary_os_boots() {
 
 backup_restore_test() {
     TEST_PREFIX="$1"
+    RESCUEZILLA_IMAGE_NAME="Rescuezilla.$TEST_PREFIX.Image"
     CLONEZILLA_IMAGE_NAME="Clonezilla.$TEST_PREFIX.Image"
     VM_NAME="$2"
     ISO_PATH="$3"
@@ -75,6 +76,15 @@ backup_restore_test() {
 
     boot_dvd "$VM_NAME"
 
+    RESCUEZILLA_IMAGE_PATH="/mnt/rescuezilla.shared.folder/$RESCUEZILLA_IMAGE_NAME/parts"
+    echo "Delete previous Rescuezilla image from within the VM $RESCUEZILLA_IMAGE_PATH"
+    run_cmd_in_rescuezilla_vm $TARGET_IP "rm -rf $RESCUEZILLA_IMAGE_PATH"
+    # Backup using Rescuezilla
+    run_cmd_in_rescuezilla_vm $TARGET_IP "rescuezilla backup --source /dev/sda --destination $CLONEZILLA_IMAGE_NAME"
+    # Backup using Clonezilla
+    #run_cmd_in_rescuezilla_vm $TARGET_IP "ocs_live_batch=yes /usr/sbin/ocs-sr -q2 -j2 -z1 -i 4096 -sfsck -senc -p command savedisk $CLONEZILLA_IMAGE_NAME sda"
+
+
     CLONEZILLA_IMAGE_PATH="/mnt/rescuezilla.shared.folder/$CLONEZILLA_IMAGE_NAME"
     echo "Delete previous Clonezilla image from within the VM $CLONEZILLA_IMAGE_PATH"
     run_cmd_in_rescuezilla_vm $TARGET_IP "rm -rf $CLONEZILLA_IMAGE_PATH"
@@ -89,7 +99,10 @@ backup_restore_test() {
     boot_dvd "$VM_NAME" "$ISO_PATH" "$ISO_CHECK_MATCH"
 
     # Restore using Clonezilla
-    run_cmd_in_rescuezilla_vm $TARGET_IP "ocs_live_batch=yes /usr/sbin/ocs-sr -g auto -e1 auto -e2 -r -j2 -p cmd restoredisk $CLONEZILLA_IMAGE_NAME sda"
+    #run_cmd_in_rescuezilla_vm $TARGET_IP "ocs_live_batch=yes /usr/sbin/ocs-sr -g auto -e1 auto -e2 -r -j2 -p cmd restoredisk $CLONEZILLA_IMAGE_NAME sda"
+
+    # Restore using Rescuezilla
+    run_cmd_in_rescuezilla_vm $TARGET_IP "rescuezilla restore --source $RESCUEZILLA_IMAGE_NAME --destination /dev/sda"
 
     # Check primary OS boots
     check_primary_os_boots "$VM_NAME" "$PRIMARY_OS_CHECK_MATCH"
