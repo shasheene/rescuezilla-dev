@@ -1085,81 +1085,57 @@ class RestoreManager:
             for image_key in self.restore_mapping_dict.keys():
                 dest_partition_short_dev_node_string += re.sub('/dev/', '', self.restore_mapping_dict[image_key]['dest_key']) + " "
 
-            if shutil.which("ocs-tux-postprocess") is not None:
-                GLib.idle_add(self.display_status, _("Removing udev MAC address records (if any)"), "")
-                # TODO: Port Clonezilla's ocs-tux-postprocess bash script to Python instead of relying on Clonezilla's script
-                process, flat_command_string, failed_message = Utility.run(
-                   "Remove the udev MAC address records on the restored GNU/Linux (if any)",
-                    ["ocs-tux-postprocess", dest_partition_short_dev_node_string], use_c_locale=False, logger=self.logger)
-                if process.returncode == 0:
-                    message = "Successfully removed any udev MAC address records"
-                    self.logger.write(message + "\n")
-                    # Not displaying this to users because it wil lbe confusing for end-users.
-            else:
-                message = "Not removing udev MAC address records: Unable to find ocs-tux-postprocess. Is Clonezilla installed?"
+            GLib.idle_add(self.display_status, _("Removing udev MAC address records (if any)"), "")
+            # TODO: Port Clonezilla's ocs-tux-postprocess bash script to Python instead of relying on Clonezilla's script
+            process, flat_command_string, failed_message = Utility.run(
+               "Remove the udev MAC address records on the restored GNU/Linux (if any)",
+                [Utility.get_python_relative_path("scripts/ocs-tux-postprocess"), dest_partition_short_dev_node_string], use_c_locale=False, logger=self.logger)
+            if process.returncode == 0:
+                message = "Successfully removed any udev MAC address records"
+                self.logger.write(message + "\n")
+                # Not displaying this to users because it will be confusing for end-users.
+
+            GLib.idle_add(self.display_status, _("Re-installing syslinux (if any)"), "")
+            # TODO: Port Clonezilla's ocs-update-syslinux bash script to Python instead of relying on Clonezilla's script
+            process, flat_command_string, failed_message = Utility.run(
+               "Re-install syslinux (if any)",
+                [Utility.get_python_relative_path("scripts/ocs-update-syslinux"), "--batch", dest_partition_short_dev_node_string], use_c_locale=False, logger=self.logger)
+            if process.returncode == 0:
+                message = _("Successfully re-installed syslinux bootloader")
                 self.logger.write(message + "\n")
                 with self.summary_message_lock:
                     self.summary_message += message + "\n"
 
-            if shutil.which("ocs-update-syslinux") is not None:
-                GLib.idle_add(self.display_status, _("Re-installing syslinux (if any)"), "")
-                # TODO: Port Clonezilla's ocs-update-syslinux bash script to Python instead of relying on Clonezilla's script
-                process, flat_command_string, failed_message = Utility.run(
-                   "Re-install syslinux (if any)",
-                    ["ocs-update-syslinux", "--batch", dest_partition_short_dev_node_string], use_c_locale=False, logger=self.logger)
-                if process.returncode == 0:
-                    message = _("Successfully re-installed syslinux bootloader")
-                    self.logger.write(message + "\n")
-                    with self.summary_message_lock:
-                        self.summary_message += message + "\n"
-            else:
-                message = "Not re-installing syslinux: Unable to find ocs-update-syslinux. Is Clonezilla installed?"
+            GLib.idle_add(self.display_status, _("Re-installing GRUB bootloader (if any)"), "")
+            # TODO: Port Clonezilla's ocs-install-grub bash script to Python instead of relying on Clonezilla's script
+            process, flat_command_string, failed_message = Utility.run(
+               "Re-installing GRUB bootloader (if any)",
+                [Utility.get_python_relative_path("scripts/ocs-install-grub"), "--selected-parts", dest_partition_short_dev_node_string,
+                 "--selected-hd", restore_destination_drive_short_dev_node, "auto"], use_c_locale=False, logger=self.logger)
+            # Returns 0 on GRUB re-install success, but returns -1 even if GRUB not found
+            if process.returncode == 0:
+                message = _("Successfully re-installed GRUB bootloader")
+                for line in process.stderr:
+                    if "Installing for" in line:
+                        message += ": " + line.sub("Installing for ")
                 self.logger.write(message + "\n")
                 with self.summary_message_lock:
                     self.summary_message += message + "\n"
-
-            if shutil.which("ocs-install-grub") is not None:
-                GLib.idle_add(self.display_status, _("Re-installing GRUB bootloader (if any)"), "")
-                # TODO: Port Clonezilla's ocs-install-grub bash script to Python instead of relying on Clonezilla's script
-                process, flat_command_string, failed_message = Utility.run(
-                   "Re-installing GRUB bootloader (if any)",
-                    ["ocs-install-grub", "--selected-parts", dest_partition_short_dev_node_string,
-                     "--selected-hd", restore_destination_drive_short_dev_node, "auto"], use_c_locale=False, logger=self.logger)
-                # Returns 0 on GRUB re-install success, but returns -1 even if GRUB not found
-                if process.returncode == 0:
-                    message = _("Successfully re-installed GRUB bootloader")
-                    for line in process.stderr:
-                        if "Installing for" in line:
-                            message += ": " + line.sub("Installing for ")
-                    self.logger.write(message + "\n")
-                    with self.summary_message_lock:
-                        self.summary_message += message + "\n"
-                else:
-                    message = _("Did not update GRUB bootloader (if any)")
-                    self.logger.write(message + "\n")
-                    with self.summary_message_lock:
-                        self.summary_message += message + "\n"
-                # Clonezilla doesn't check the return code, so neither does Rescuezilla
             else:
-                message = "Not re-installing GRUB bootloader: Unable to find ocs-install-grub. Is Clonezilla installed?"
+                message = _("Did not update GRUB bootloader (if any)")
                 self.logger.write(message + "\n")
                 with self.summary_message_lock:
                     self.summary_message += message + "\n"
+            # Clonezilla doesn't check the return code, so neither does Rescuezilla
 
-            if shutil.which("ocs-update-initrd") is not None:
-                GLib.idle_add(self.display_status, _("Updating initramfs (if any)"), "")
-                # TODO: Port Clonezilla's ocs-update-initrd bash script to Python instead of relying on Clonezilla's script
-                process, flat_command_string, failed_message = Utility.run(
-                   "Update initramfs (if any)",
-                    ["ocs-update-initrd", "--selected-parts", dest_partition_short_dev_node_string,
-                     "--selected-hd", restore_destination_drive_short_dev_node, "auto"], use_c_locale=False, logger=self.logger)
-                if process.returncode == 0:
-                    message = _("Successfully updated initramfs")
-                    self.logger.write(message + "\n")
-                    with self.summary_message_lock:
-                        self.summary_message += message + "\n"
-            else:
-                message = "Not updating initramfs: Unable to find ocs-update-initrd. Is Clonezilla installed?"
+            GLib.idle_add(self.display_status, _("Updating initramfs (if any)"), "")
+            # TODO: Port Clonezilla's ocs-update-initrd bash script to Python instead of relying on Clonezilla's script
+            process, flat_command_string, failed_message = Utility.run(
+               "Update initramfs (if any)",
+                [Utility.get_python_relative_path("scripts/ocs-update-initrd"), "--selected-parts", dest_partition_short_dev_node_string,
+                 "--selected-hd", restore_destination_drive_short_dev_node, "auto"], use_c_locale=False, logger=self.logger)
+            if process.returncode == 0:
+                message = _("Successfully updated initramfs")
                 self.logger.write(message + "\n")
                 with self.summary_message_lock:
                     self.summary_message += message + "\n"
@@ -1197,26 +1173,21 @@ class RestoreManager:
                     if len(Parted.get_partitions_containing_flag(self.image.parted_dict, "bios_grub")) > 0:
                         self.logger.write("Found bios_grub flag! Skipping EFI NVRAM update.")
                     else:
-                        if shutil.which("update-efi-nvram-boot-entry") is None:
-                            GLib.idle_add(self.display_status, _("Updating EFI NVRAM..."))
-                            # TODO: Port Clonezilla's ocs-update-initrd bash script to Python instead of relying on Clonezilla's script
-                            # Unlike Clonezilla, no need to specify a -f/--efi-boot-file-info option
-                            process, flat_command_string, failed_message = Utility.run(
-                                "Update EFI NVRAM",
-                                ["update-efi-nvram-boot-entry", "--full-path-to-efi-file", self.image.efi_nvram_dat_absolute_path, self.restore_destination_drive], use_c_locale=False,
-                                logger=self.logger)
-                            if process.returncode == 0:
-                                message = _("Successfully updated EFI NVRAM")
-                                self.logger.write(message)
-                                with self.summary_message_lock:
-                                    self.summary_message += message + "\n"
-                            # No need to implement "get the new efi_os_label, efi_system_part_no and efi_sys_part_boot_file"
-                            # because Rescuezilla doesn't operate in client/server like Clonezilla.
-                        else:
-                            message = "Not updating EFI NVRAM: Unable to find update-efi-nvram-boot-entry. Is Clonezilla installed?\n"
+                        GLib.idle_add(self.display_status, _("Updating EFI NVRAM..."))
+                        # TODO: Port Clonezilla's ocs-update-initrd bash script to Python instead of relying on Clonezilla's script
+                        # Unlike Clonezilla, no need to specify a -f/--efi-boot-file-info option
+                        process, flat_command_string, failed_message = Utility.run(
+                            "Update EFI NVRAM",
+                            [Utility.get_python_relative_path("scripts/update-efi-nvram-boot-entry"), "--full-path-to-efi-file", self.image.efi_nvram_dat_absolute_path, self.restore_destination_drive], use_c_locale=False,
+                            logger=self.logger)
+                        if process.returncode == 0:
+                            message = _("Successfully updated EFI NVRAM")
                             self.logger.write(message)
                             with self.summary_message_lock:
                                 self.summary_message += message + "\n"
+                        # No need to implement "get the new efi_os_label, efi_system_part_no and efi_sys_part_boot_file"
+                        # because Rescuezilla doesn't operate in client/server like Clonezilla.
+
         elif isinstance(self.image, FsArchiverImage):
             self.logger.write("Detected FsArchiverImage")
             self.logger.write(str(self.restore_mapping_dict))

@@ -492,6 +492,11 @@ class Utility:
         # 1 decimal place (55.3 minutes)
         return "{:.1f}".format(duration_minutes + frac)
 
+    # Get folder relative to Python folder, in other words "/usr/lib/python3/dist-packages/rescuezilla/"
+    @staticmethod
+    def get_python_relative_path(utility_relative_path):
+        return os.path.join(os.path.dirname(os.path.realpath(__file__)), utility_relative_path)
+
     @staticmethod
     def run(short_description, cmd_list, use_c_locale, output_filepath=None, logger=None):
         if use_c_locale:
