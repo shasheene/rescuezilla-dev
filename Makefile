@@ -15,7 +15,7 @@ THREADS = `cat /proc/cpuinfo | grep process | tail -1 | cut -d":" -f2 | cut -d" 
 
 all: focal
 
-buildscripts = build.sh chroot.steps.part.1.sh chroot.steps.part.2.sh
+buildscripts = build.sh chroot_steps_part_1.sh chroot_steps_part_2.sh
 
 # ISO image based on Ubuntu 20.04 Focal LTS (Long Term Support) 64bit
 focal: ARCH=amd64
