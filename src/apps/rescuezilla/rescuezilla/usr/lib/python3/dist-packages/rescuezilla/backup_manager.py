@@ -242,7 +242,12 @@ class BackupManager:
 
             info_lshw_filepath = os.path.join(self.dest_dir, "Info-lshw.txt")
             GLib.idle_add(self.display_status, _("Saving: {file}").format(file=info_lshw_filepath), "")
-            process, flat_command_string, failed_message = Utility.run("Saving Info-lshw.txt", ["lshw"], use_c_locale=True, output_filepath=info_lshw_filepath, logger=self.logger)
+            process, flat_command_string, failed_message = Utility.run("Saving Info-lshw.txt", ["lshw"],
+                                                                       use_c_locale=True,
+                                                                       # lshw can output data in binary
+                                                                       encoding=None,
+                                                                       output_filepath=info_lshw_filepath,
+                                                                       logger=self.logger)
             if process.returncode != 0:
                 with self.summary_message_lock:
                     self.summary_message += failed_message
@@ -413,6 +418,8 @@ class BackupManager:
             process, flat_command_string, failed_message = Utility.run("Saving EFI NVRAM info",
                                                                               ["efibootmgr", "--verbose"],
                                                                               use_c_locale=True,
+                                                                              # efibootmgr can output data in binary
+                                                                              encoding=None,
                                                                               output_filepath=efi_nvram_filepath,
                                                                               logger=self.logger)
             if process.returncode != 0:
