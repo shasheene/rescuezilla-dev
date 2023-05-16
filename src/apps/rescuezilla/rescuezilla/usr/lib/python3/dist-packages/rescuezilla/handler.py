@@ -27,6 +27,7 @@ from datetime import datetime
 import gi
 
 from backup_manager import BackupManager
+from cli_ui_manager import GtkUiManager
 from clone_manager import CloneManager
 from image_explorer_manager import ImageExplorerManager
 from mount_local_path import MountLocalPath
@@ -113,7 +114,13 @@ class Handler:
         compression_format_combobox.set_active(0)
         self.compression_tool_changed(compression_format_combobox)
 
-        self.backup_manager = BackupManager(builder, self.human_readable_version)
+        backup_ui_manager = GtkUiManager(builder=builder,
+                                         main_statusbar=self.builder.get_object("main_statusbar"),
+                                         progress_bar=self.builder.get_object("backup_progress"),
+                                         progress_status=self.builder.get_object("backup_progress_status"),
+                                         post_task_action_combobox=self.builder.get_object("backup_step8_perform_action_combobox"),
+                                         summary_program_defined_text=self.builder.get_object("backup_step9_summary_program_defined_text"))
+        self.backup_manager = BackupManager(ui_manager=backup_ui_manager, human_readable_version=self.human_readable_version)
         self.restore_manager = RestoreManager(builder)
         self.verify_manager = VerifyManager(builder)
         self.clone_manager = CloneManager(builder, self.backup_manager, self.restore_manager)
