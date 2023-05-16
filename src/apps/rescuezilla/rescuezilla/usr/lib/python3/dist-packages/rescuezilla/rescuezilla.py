@@ -45,8 +45,6 @@ def main():
         print("Rescuezilla must run as root.")
         exit(0)
 
-    gettext_translation_search_path = sys.base_prefix + "/share/locale/{LANGUAGE,LC_ALL,LC_MESSAGES,LANG}/LC_MESSAGES/rescuezilla.mo"
-    print("Setting GTK translation domain by searching: " + gettext_translation_search_path)
     # Set the translation domain folder:
     gettext.bindtextdomain('rescuezilla')
     # Query the translation
