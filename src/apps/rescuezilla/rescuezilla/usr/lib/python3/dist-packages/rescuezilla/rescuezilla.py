@@ -50,6 +50,10 @@ def main():
     # Query the translation
     gettext.textdomain('rescuezilla')
 
+    launch_gui()
+
+
+def launch_gui():
     builder = Gtk.Builder()
     builder.set_translation_domain('rescuezilla')
     # Use the GTKBuilder to dynamically construct all the UI widget objects as defined in the GTKBuilder .glade XML
