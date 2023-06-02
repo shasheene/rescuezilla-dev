@@ -26,10 +26,13 @@ import shutil
 import subprocess
 import threading
 import time
+import json
+import datetime
 from contextlib import contextmanager
 from queue import Queue
 from threading import Thread
 from time import sleep
+from enum import Enum
 
 from wizard_state import RESCUEZILLA_MOUNT_TMP_DIR
 
@@ -45,6 +48,16 @@ Utility functions to eg, display busy dialog boxes or error messages
 
 def _(string):
     return gettext.gettext(string)
+
+
+def dumper(arg):
+    def json_default(arg):
+        if isinstance(arg, datetime.datetime) or isinstance(arg, Enum):
+            return "{}".format(arg)
+        raise TypeError(arg)
+
+    # return json.dumps(data, sort_keys=True, default=json_default, indent=2)
+    print(json.dumps(arg, sort_keys=True, default=json_default, indent=2))
 
 
 class PleaseWaitModalPopup:
@@ -153,6 +166,40 @@ class ErrorMessageModalPopup(Gtk.MessageDialog):
     def display_nonfatal_warning_message(builder, message):
         print(message)
         ErrorMessageModalPopup(builder, message)
+
+
+def ask_for_password_popup(builder, message, title):
+    def responseToDialog(entry, dialog, response):
+        dialog.response(response)
+
+    main_window = builder.get_object("main_window")
+
+    dialog_window = Gtk.MessageDialog(
+        parent=main_window,
+        flags=Gtk.DialogFlags.MODAL | Gtk.DialogFlags.DESTROY_WITH_PARENT,
+        type=Gtk.MessageType.QUESTION,
+        buttons=Gtk.ButtonsType.OK_CANCEL,
+        message_format=message,
+    )
+
+    dialog_window.set_title(title)
+    dialog_box = dialog_window.get_content_area()
+
+    userEntry = Gtk.Entry()
+    userEntry.set_visibility(False)
+    userEntry.set_invisible_char("*")
+    userEntry.set_size_request(250, 0)
+    userEntry.connect("activate", responseToDialog, dialog_window, Gtk.ResponseType.OK)
+
+    dialog_box.pack_end(userEntry, False, False, 0)
+    dialog_window.show_all()
+    response = dialog_window.run()
+    text = userEntry.get_text()
+    dialog_window.destroy()
+    if (response == Gtk.ResponseType.OK) and (text != ""):
+        return text
+    else:
+        return None
 
 
 class AreYouSureModalPopup:

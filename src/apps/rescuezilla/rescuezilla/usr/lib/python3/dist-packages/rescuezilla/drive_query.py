@@ -33,6 +33,7 @@ from parser.parted import Parted
 from parser.sfdisk import Sfdisk
 from utility import PleaseWaitModalPopup, Utility, _, ErrorMessageModalPopup
 from wizard_state import IMAGE_EXPLORER_DIR, RESCUEZILLA_MOUNT_TMP_DIR
+from bitlocker import BitLocker
 
 import gi
 
@@ -55,6 +56,23 @@ class DriveQuery:
         self.win = self.builder.get_object("main_window")
         self._is_displaying_advanced_information_lock = threading.Lock()
         self._is_displaying_advanced_information = False
+        self.icon_pixbufs = {
+            "drive_partition_not_encrypted": self.builder.get_object(
+                "drive_partition_not_encrypted"
+            )
+            .get_pixbuf()
+            .scale_simple(32, 32, GdkPixbuf.InterpType.BILINEAR),
+            "drive_partition_encrypted_and_unlocked": self.builder.get_object(
+                "drive_partition_encrypted_and_unlocked"
+            )
+            .get_pixbuf()
+            .scale_simple(32, 32, GdkPixbuf.InterpType.BILINEAR),
+            "drive_partition_encrypted_and_locked": self.builder.get_object(
+                "drive_partition_encrypted_and_locked"
+            )
+            .get_pixbuf()
+            .scale_simple(32, 32, GdkPixbuf.InterpType.BILINEAR),
+        }
 
     def cancel_query(self):
         with self.requested_stop_lock:
@@ -169,9 +187,19 @@ class DriveQuery:
                             self.drive_state, drive_key, partition_key
                         )
                     )
+                    partition_icon = self.icon_pixbufs[
+                        BitLocker.get_partition_icon_name(
+                            self.drive_state, drive_key, partition_key
+                        )
+                    ]
                     # Add row that's ticked
                     self.save_partition_list_store.append(
-                        [partition_key, True, flattened_partition_description]
+                        [
+                            partition_key,
+                            True,
+                            partition_icon,
+                            flattened_partition_description,
+                        ]
                     )
             else:
                 # Add the drive itself
@@ -182,7 +210,7 @@ class DriveQuery:
                 )
                 # Add row that's ticked
                 self.save_partition_list_store.append(
-                    [drive_key, True, flattened_partition_description]
+                    [drive_key, True, None, flattened_partition_description]
                 )
         except Exception:
             tb = traceback.format_exc()
