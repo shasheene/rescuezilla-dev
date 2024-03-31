@@ -34,9 +34,9 @@ all:	embed-version deb
 # To avoid polluting the source tree with modifications, first copy to a working directory
 copy: clean
 	mkdir --parents $(WORKING_DIR) || true
-	cp --archive ./debian ./$(APP_NAME) $(WORKING_DIR)/
+	cp --archive --no-preserve=ownership,time ./debian ./$(APP_NAME) $(WORKING_DIR)/
 	# Copy this Makefile into the working directory
-	cp --archive ../common.app.mk $(WORKING_DIR)/$(APP_NAME)/Makefile
+	cp --archive --no-preserve=ownership,time ../common.app.mk $(WORKING_DIR)/$(APP_NAME)/Makefile
 
 embed-version: copy
 	# Substitute version into file
