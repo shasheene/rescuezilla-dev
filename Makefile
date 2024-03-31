@@ -244,6 +244,10 @@ docker-test:
 docker-status:
 	docker exec --interactive --workdir=/home/rescuezilla/ builder.container make status
 
+# Create a user within the Docker container, notably with same UID (user ID) as the caller 
+docker-create-user:
+	docker exec --interactive --workdir=/home/rescuezilla/ builder.container /bin/bash -c "useradd -u $$UID -s /bin/bash -d /home/builder/ -m -G sudo builder"
+
 # Start an interactive bash session for live debugging
 docker-bash:
 	docker exec --interactive --tty --workdir=/home/rescuezilla/ builder.container /bin/bash
