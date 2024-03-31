@@ -51,7 +51,8 @@ embed-version: copy
 deb:
 	mkdir --parents $(PACKING_DIR) || true
 	$(info * Create gzipped tar archive of Rescuezilla frontend app source code.)
-	cd $(WORKING_DIR)/$(APP_NAME) && tar -czf $(ABS_BUILD_PATH)/$(APP_NAME)_$(LAST_TAGGED_VERSION).orig.tar.gz ./
+	# touch https://stackoverflow.com/a/69148739
+	cd $(WORKING_DIR)/$(APP_NAME) && tar --touch -czf $(ABS_BUILD_PATH)/$(APP_NAME)_$(LAST_TAGGED_VERSION).orig.tar.gz ./
 	$(info * Create gzipped tar archive of debian-specific configuration directory.)
 	cd $(WORKING_DIR)/ && tar -czf $(ABS_BUILD_PATH)/$(APP_NAME)_$(LAST_TAGGED_VERSION).debian.tar.gz ./debian/
 	$(info * Extract $(APP_NAME) source tarball. This makes a copy of the source tree in the build directory)
