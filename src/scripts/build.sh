@@ -65,14 +65,22 @@ if [ "$CODENAME" = "INVALID" ] || [ "$ARCH" = "INVALID" ]; then
   exit 1
 fi
 
-# Disable the debootstrap GPG validation for Ubuntu 18.04 (Bionic) after its public key
-# failed to validate on the Docker build environment container for an unclear reason.
-# See [1] for full write-up.
-#
-# [1] https://github.com/rescuezilla/rescuezilla/issues/538
-GPG_CHECK_OPTS=""
-if [ "$CODENAME" = "bionic" ]; then
-    GPG_CHECK_OPTS="--no-check-gpg"
+# End-of-life releases had their signing keys rotated, so let's download the keys from the signature
+declare -A DEPRECATED_GPG_KEYS=(
+    [bionic]="ubuntu-archive-automatic-signing-key-2012.gpg:3B4FE6ACC0B21F32"
+    [focal]="ubuntu-archive-automatic-signing-key-2018.gpg:871920D1991BC93C"
+)
+# If this build is for a codename where this matters (because it's specified above), we need to download the key then set the option
+if [[ -n "${DEPRECATED_GPG_KEYS[$CODENAME]}" ]]; then
+    IFS=":" read -r key_file key_fingerprint <<< "${DEPRECATED_GPG_KEYS[$CODENAME]}"
+    key_path="${BUILD_DIRECTORY}/${key_file}"
+
+    # FIXME: apt-key is deprecated [1] because it writes the key to one big keyring file that all repositories trust
+    # [1] https://askubuntu.com/questions/1286545/what-commands-exactly-should-replace-the-deprecated-apt-key
+    gpg --no-default-keyring --keyring "${key_path}" --keyserver keyserver.ubuntu.com --recv-keys "${key_fingerprint}"
+
+    # Specify the keyring for the newly imported key
+    GPG_CHECK_OPTS="--keyring=${key_path}"
 fi
 
 # debootstrap part 1/2: If package cache doesn't exist, download the packages
@@ -108,7 +116,7 @@ if [[ $RET -ne 0 ]]; then
 fi
  
 # debootstrap part 2/2: Bootstrap a Debian root filesystem based on cached packages directory (part 2/2)
-chroot $BUILD_DIRECTORY/chroot/ /bin/bash -c "DEBOOTSTRAP_DIR=\"debootstrap\" ./debootstrap/debootstrap --second-stage ${GPG_CHECK_OPTS}"
+chroot $BUILD_DIRECTORY/chroot/ /bin/bash -c "DEBOOTSTRAP_DIR=\"debootstrap\" ./debootstrap/debootstrap --second-stage"
 RET=$?
 if [[ $RET -ne 0 ]]; then
     echo "debootstrap part 2/2 failed. This may occur if the package cache ($PKG_CACHE_DIRECTORY/$DEBOOTSTRAP_CACHE_DIRECTORY/)"
