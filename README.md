@@ -55,11 +55,11 @@ You can help translate Rescuezilla on [Hosted Weblate](https://hosted.weblate.or
 
 ## History
 
-Below table shows an abridged history of Rescuezilla. For more information, see the [CHANGELOG.md](https://raw.githubusercontent.com/rescuezilla/rescuezilla/master/CHANGELOG.md) file.
+Below table shows an abridged history of Rescuezilla. For more information, see the [CHANGELOG.md](https://github.com/rescuezilla/rescuezilla/blob/master/CHANGELOG.md) file.
 
 | Release             | Release Date | Operating System | Notes |
 | ------------------- | ---------- | ---------------- | ---------------------------------- |
-| Rescuezilla Rolling | 2023-XX-XX | Ubuntu 24.04     | Periodic [rolling release](https://github.com/rescuezilla/rescuezilla/releases) with bleeding-edge features and translations
+| Rescuezilla Pre-release | 2023-XX-XX | Ubuntu 24.04     | Periodic [pre-release updates](https://github.com/rescuezilla/rescuezilla/releases) with bleeding-edge features and translations
 | Rescuezilla 2.5.1   | 2024-09-08 | Ubuntu 24.04     | Added command-line interface
 | Rescuezilla 2.4.2   | 2023-03-05 | Ubuntu 22.04     | Began compiling latest partclone
 | Rescuezilla 2.3.1   | 2022-01-02 | Ubuntu 21.10     | Added 'Verify Image'
