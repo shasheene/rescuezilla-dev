@@ -148,7 +148,6 @@ backup_restore_test() {
 
     echo "* Redeploy primary OS"
     ./integration_test.py stop --vm $VM_NAME
-    ./integration_test.py reset --vm $VM_NAME
     ./integration_test.py deploy --vm $VM_NAME
     echo "* Sanity check primary OS boots, and correctly configured for integration test to confirm"
     check_primary_os_boots "$VM_NAME" "$PRIMARY_OS_CHECK_MATCH"
