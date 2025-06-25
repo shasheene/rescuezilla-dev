@@ -76,7 +76,7 @@ _backup_with_rescuezilla_cli() {
 
     echo "** Delete previous Rescuezilla image from within the VM $IMAGE_PATH"
     run_cmd_in_rescuezilla_vm $TARGET_IP "rm -rf $IMAGE_PATH"
-    time run_cmd_in_rescuezilla_vm $TARGET_IP "rescuezillapy backup --source /dev/sda --destination $IMAGE_PATH"
+    time run_cmd_in_rescuezilla_vm $TARGET_IP "rescuezillapy backup --compression-format=uncompressed --source /dev/sda --destination $IMAGE_PATH"
 }
 
 _restore_with_rescuezilla_cli() {
