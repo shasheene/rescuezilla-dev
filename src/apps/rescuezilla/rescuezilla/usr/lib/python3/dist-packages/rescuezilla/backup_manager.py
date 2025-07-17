@@ -732,6 +732,7 @@ class BackupManager:
 
         partition_number = 0
         for partition_key in self.partitions_to_backup.keys():
+            unencrypted_partition_key = partition_key
             self.ui_manager.display_status(msg1="", msg2="")
             partition_number += 1
             total_progress_float = Utility.calculate_progress_ratio(current_partition_completed_percentage=0,
@@ -796,10 +797,15 @@ class BackupManager:
                         self.metadata_only_image_to_annotate.image_format_dict_dict[short_device_node]['is_lvm_logical_volume'] = False
                 continue
 
-            if filesystem == "ntfs":
+            if filesystem == "BitLocker" and "unencrypted_data" in self.partitions_to_backup[partition_key]:
+                print(f"Handling dislocked bitlocker partition {partition_key}")
+                filesystem = self.partitions_to_backup[partition_key]["unencrypted_data"]["filesystem"]
+                unencrypted_partition_key = self.partitions_to_backup[partition_key]["unencrypted_data"]["device_path"]
+
+            if filesystem == "ntfs": # and dislocked bitlocker partitions
                 # Create Clonezilla's NTFS boot reserved partition "sda1.info"
                 tmp_mount = "/tmp/rescuezilla.ntfs.mount"
-                is_success, message, is_partition_windows_boot_reserved = self.is_partition_windows_boot_reserved(partition_key, tmp_mount)
+                is_success, message, is_partition_windows_boot_reserved = self.is_partition_windows_boot_reserved(unencrypted_partition_key, tmp_mount)
                 if not is_success:
                     with self.summary_message_lock:
                         self.summary_message += message + "\n"
@@ -808,7 +814,7 @@ class BackupManager:
                 if is_partition_windows_boot_reserved:
                     partition_info_filepath = os.path.join(self.dest_dir, short_device_node + ".info")
                     self.ui_manager.display_status(msg1=_("Saving: {file}").format(file=partition_info_filepath), msg2="")
-                    self.logger.write("Detected partition " + partition_key + " is a Windows NTFS boot reserved partition. Writing " + partition_info_filepath)
+                    self.logger.write("Detected partition " + unencrypted_partition_key + " is a Windows NTFS boot reserved partition. Writing " + partition_info_filepath)
                     with open(partition_info_filepath, 'w') as filehandle:
                         try:
                             output = "PARTITION_TYPE=Win_boot_reserved\n"
@@ -839,7 +845,7 @@ class BackupManager:
             # [1] https://github.com/rescuezilla/rescuezilla/issues/65
             if shutil.which("partclone." + filesystem) is not None and filesystem != "apfs":
                 partclone_cmd_list = ["partclone." + filesystem] + Utility.get_partclone_rescue_options(self.is_rescue) + ["--logfile", "/var/log/partclone.log", "--clone",
-                                      "--source", partition_key, "--output", "-"]
+                                      "--source", unencrypted_partition_key, "--output", "-"]
                 filepath = os.path.join(self.dest_dir,
                                         short_device_node + "." + filesystem + "-ptcl-img." + compression_suffix + ".")
                 split_cmd_list = ["split", "--suffix-length=2", "--bytes=" + split_size, "-", filepath]
