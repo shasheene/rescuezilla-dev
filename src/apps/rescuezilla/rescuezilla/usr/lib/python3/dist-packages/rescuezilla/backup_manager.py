@@ -1193,6 +1193,7 @@ class BackupManager:
 
         partition_number = 0
         for partition_key in self.partitions_to_backup.keys():
+            unencrypted_partition_key = partition_key
             self.ui_manager.display_status(msg1="", msg2="")
             partition_number += 1
             total_progress_float = Utility.calculate_progress_ratio(
@@ -1305,11 +1306,25 @@ class BackupManager:
                         ]["is_lvm_logical_volume"] = False
                 continue
 
-            if filesystem == "ntfs":
+            if (
+                filesystem == "BitLocker"
+                and "unencrypted_data" in self.partitions_to_backup[partition_key]
+            ):
+                print(f"Handling dislocked bitlocker partition {partition_key}")
+                filesystem = self.partitions_to_backup[partition_key][
+                    "unencrypted_data"
+                ]["filesystem"]
+                unencrypted_partition_key = self.partitions_to_backup[partition_key][
+                    "unencrypted_data"
+                ]["device_path"]
+
+            if filesystem == "ntfs":  # and dislocked bitlocker partitions
                 # Create Clonezilla's NTFS boot reserved partition "sda1.info"
                 tmp_mount = "/tmp/rescuezilla.ntfs.mount"
                 is_success, message, is_partition_windows_boot_reserved = (
-                    self.is_partition_windows_boot_reserved(partition_key, tmp_mount)
+                    self.is_partition_windows_boot_reserved(
+                        unencrypted_partition_key, tmp_mount
+                    )
                 )
                 if not is_success:
                     with self.summary_message_lock:
@@ -1330,7 +1345,7 @@ class BackupManager:
                     )
                     self.logger.write(
                         "Detected partition "
-                        + partition_key
+                        + unencrypted_partition_key
                         + " is a Windows NTFS boot reserved partition. Writing "
                         + partition_info_filepath
                     )
@@ -1385,7 +1400,7 @@ class BackupManager:
                         "/var/log/partclone.log",
                         "--clone",
                         "--source",
-                        partition_key,
+                        unencrypted_partition_key,
                         "--output",
                         "-",
                     ]
