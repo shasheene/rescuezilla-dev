@@ -88,7 +88,7 @@ jobs:
     strategy:
       matrix:
         variant: [
-          {name: "plucky"},
+          {name: "resolute"},
 
           # TODO: Re-enable when test is faster and no longer hits 12-hour GitHub Actions workflow max limit
           #{name: "oracular"},
@@ -132,7 +132,7 @@ jobs:
       # using a Intel(R) Xeon(R) CPU D-1520 (2015-era 4-core Intel workstation CPU)
       matrix:
         iso: [
-          {path: "rescuezilla.amd64.plucky.iso", check_match: "Ubuntu 25.04"},
+          {path: "rescuezilla.amd64.resolute.iso", check_match: "Ubuntu 26.04"},
 
           # TODO: Re-enable when test is faster and no longer hits 12-hour GitHub Actions workflow max limit
           #{path: "rescuezilla.amd64.oracular.iso", check_match: "Ubuntu 24.10"},
